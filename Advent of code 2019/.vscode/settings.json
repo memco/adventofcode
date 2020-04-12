@@ -1,6 +1,0 @@
-{
-  "python.linting.pylintEnabled": false,
-  "python.linting.pylamaEnabled": true,
-  "python.linting.enabled": true,
-  "python.pythonPath": "/Users/michael/.pyenv/versions/3.8.0/bin/python"
-}
