@@ -144,73 +144,21 @@ def neighbor_locations(rnum, cnum, width, height):
     return {c for c in [col_left,col_right,col_above,col_below] if c != None}
 
 
-def neighbors_with_diags(rnum, cnum, width, height):
-    has_col_above = has_item_before(rnum)
-    has_col_below = has_item_after(rnum, height)
-    has_col_left = has_item_before(cnum)
-    has_col_right = has_item_after(cnum, width)
-    has_up_left = has_col_above and has_col_left
-    has_up_right = has_col_above and has_col_right
-    has_down_left = has_col_below and has_col_left
-    has_down_right = has_col_below and has_col_right
-    col_left =  (rnum, cnum - 1) if has_col_left else None
-    col_right = (rnum, cnum + 1) if has_col_right else None
-    col_above = (rnum - 1, cnum) if has_col_above else None
-    col_below = (rnum + 1, cnum) if has_col_below else None
-    up_left =    (rnum - 1, cnum - 1) if has_up_left else None
-    up_right =   (rnum - 1, cnum + 1) if has_up_right else None
-    down_left =  (rnum + 1, cnum - 1) if has_down_left else None
-    down_right = (rnum + 1, cnum + 1) if has_down_right else None
-    return {c for c in [col_left,col_right,col_above,col_below,up_left,up_right,down_left,down_right] if c != None}
-
-
-
-# def collect_neighbors_if(point, grid, size=0, collected=None, scanned=None):
-# def collect_neighbors_if(point, grid, size=0, collected=None):
-def collect_neighbors_if(point, grid, low_point_val, this_scan = [], scanned=None):
-    # if not collected:
-    #     collected = [point]
-    #     scanned |= set(collected)
-    #     size = 1
-    # size = size or 1
-    # self_size = 1
+def collect_neighbors_if(point, grid, scanned=None):
     scanned |= {point}
-    this_scan.append(point)
     width = len(grid[0]) - 1
     height = len(grid) - 1
-    # neighbors = [n for n in neighbor_locations(*point, width, height) if not n in scanned]
     neighbors = neighbor_locations(*point, width, height)
-    # neighbors = neighbors_with_diags(*point, width, height)
     if not neighbors:
-        return 1
-    # neighbors = [n for n in neighbor_locations(*point, width, height) if not n in scanned]
+        return
     (rnum,cnum) = point
-    val = grid[rnum][cnum] + 1
-    # nval = val + 1
-    # scanned |= {(r,c) for r,c in neighbors if grid[r][c] == 9}
-    filtered_neighbors = [(r,c) for r,c in neighbors if grid[r][c] == val and (r,c) not in scanned]
-    # filtered_neighbors = neighbors
+    val = grid[rnum][cnum]
+    filtered_neighbors = [(r,c) for r,c in neighbors if grid[r][c] >= val and (r,c) not in scanned]
     if not filtered_neighbors:
-        return 1
-    # filtered_neighbors = [(r,c) for r,c in neighbors if grid[r][c] == val ]
-    # neighbor_size = len(filtered_neighbors)
-    # size += len(filtered_neighbors)
-    sub_size = 0
+        return
     for n in filtered_neighbors:
-        # collected |= filtered_neighbors
-        # collected |= collect_neighbors_if(n, grid, collected, scanned)
-        # collected.extend(filtered_neighbors)
-        # collected.extend(collect_neighbors_if(n, grid, collected, scanned))
-        # size += collect_neighbors_if(n, grid, size=size)
-        sub_size += collect_neighbors_if(n, grid, low_point_val=low_point_val, this_scan=this_scan, scanned=scanned)
-        # scanned |= set(collected)
-    return sub_size + 1
-    # return size
+        collect_neighbors_if(n, grid, scanned=scanned)
 
-
-
-def increment(i):
-    return i+1
 
 def parse_input(inputs):
     height = len(inputs) - 1
@@ -239,13 +187,11 @@ def parse_input(inputs):
 
     basins = []
     for p in lowest_points:
-        # window = print_window(p, inputs, window_size=10)
-        # points_in_basin = collect_neighbors_if(p, inputs, scanned=scanned_points)
-        points = []
-        p_y,p_x = p
-        p_val = inputs[p_y][p_x]
-        basin_size = collect_neighbors_if(p, inputs, p_val, this_scan = points, scanned=scanned_points)
-        # print_basin(p, points, inputs)
+        scanned_point_count_pre = len(scanned_points)
+        collect_neighbors_if(p, inputs, scanned=scanned_points)
+        scanned_point_count_post = len(scanned_points)
+        scann_point_diff = scanned_point_count_post - scanned_point_count_pre
+        basin_size = scann_point_diff
         basins.append(basin_size)
     largest_basins = list(sorted(basins, reverse=True))[:3]
     total_size = reduce(mul, largest_basins)
@@ -275,28 +221,18 @@ def print_basin(point, basin, grid):
     brmax = max(p[0] for p in basin) + 3
     bcmax = max(p[1] for p in basin) + 3
     bcmin = min(p[1] for p in basin) - 3
-    # bsize_h = max(brmax - brmin, 10)
-    # bsize_w = max(bcmax - bcmin, 10)
     print_window(point, grid, (bcmin,bcmax), (brmin,brmax), set(basin))
 
 
 def print_window(point, grid, window_size_w, window_size_h, bpoints=[]):
     grid_width = len(grid[0]) -1
     grid_height = len(grid) - 1
-    # half_window_width = window_size_w // 2
-    # half_window_height = window_size_h // 2
-    # win_rmin = point[0] - half_window_height
-    # win_rmax = point[0] + half_window_height
-    # win_cmin = point[1] - half_window_width
-    # win_cmax = point[1] + half_window_width
     desired_win_rmin, desired_win_rmax = (window_size_h)
     desired_win_cmin, desired_win_cmax = (window_size_w)
     win_rmin = max(0, desired_win_rmin)
     win_rmax = min(grid_height, desired_win_rmax)
     win_cmin = max(0, desired_win_cmin)
     win_cmax = min(grid_width, desired_win_cmax)
-    # for wrnum, rnum in enumerate(range(win_rmin, win_rmax+1)):
-    #     for wcnum,cnum in enumerate(range(win_cmin, win_cmax+1)):
     cleft = '.' if desired_win_cmin < win_cmin else ''
     cright = '.' if desired_win_cmax < win_cmax else ''
     new_row = '.' * (grid_width + 1) + cleft + cright
@@ -310,7 +246,6 @@ def print_window(point, grid, window_size_w, window_size_h, bpoints=[]):
             attrs = ['bold'] if point[0] == rnum and point[1] == cnum else []
             val = grid[rnum][cnum]
             color = 'grey' if val == 9 else 'white'
-            # r += cprint_val((grid[rnum][cnum]), bg_color)
             r += colored((grid[rnum][cnum]), color, bg_color, attrs=attrs)
         r += cright
         window += r + '\n'
@@ -332,6 +267,6 @@ if __name__ == '__main__':
     # 414120: too low
     # 716040: Not right (neighbors include == current val)
     # 1055338: Not right (neighbors >= current + skip if 9)
-    # 1076920:
+    # 1076920: Not right (neighbors with diag)
     # 2443077: Not right (neighbors <= current)
     # 4333200: Not right (neighbors >= current)
