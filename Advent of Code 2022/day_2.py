@@ -87,10 +87,6 @@ game_moves = [
 def parse_input(puzzle):
     return [l for l in puzzle.splitlines() if l]
 
-# def i_won(opponent, me):
-#     if me == opponent:
-#         return False
-#     if opponent.get()
 
 def match_score(opponent, me):
     if meaning.get(opponent) == meaning.get(me):
@@ -110,12 +106,8 @@ def calc_game_score(game_str):
     totals = []
     for match in game:
         opponent, result = match.split(" ")
-        # op_score = scoring.get(opponent)
-        me = decide_move(opponent, result)
-        my_score = scoring.get(me)
-        round_score = match_score(opponent, me)
-        total = my_score + round_score
-        totals.append(total)
+        op = ord(opponent) - ord("A")
+        me = ord(result) - ord("X")
     game_score = sum(totals)
     logger.info(f"{game_score=}")
         
@@ -2622,9 +2614,32 @@ C Z
 B Y
 """
 
-def main():
-    # calc_game_score(part_1_test)
-    calc_game_score(PUZZLE_INPUT)
+def game(op, me):
+    score = (me - op) % 3
+    mscore = 3 if score == 0 else 6 if score == 1 else 0
+    round_score = me + 1 + mscore
+    return round_score
 
-if __name__ == "__main__":
-    main()
+part1_scores = []
+part2_scores = []
+part_1 = 0
+part_2 = 0
+for line in PUZZLE_INPUT.strip().splitlines():
+# for line in part_1_test.strip().splitlines():
+    moves = line.split(" ")
+    op = ord(moves[0]) - ord("A")
+    my_move = ord(moves[1]) - ord("X")
+    game_score = game(op, my_move)
+    part1_scores.append(game_score)
+    part_1 += game_score
+    new_move = (op - 2) % 3
+    if my_move == 0:
+        new_move = (op - 1) % 3
+    elif my_move == 1:
+        new_move = op
+    game_score = game(op, new_move)
+    part_2 += game_score
+    part2_scores.append(game_score)
+print(f"{part_1=}")
+print(f"{part_2=}")
+print(f"Done.")
